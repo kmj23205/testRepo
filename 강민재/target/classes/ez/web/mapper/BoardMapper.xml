@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ez.web.mapper.BoardMapper">
+  <!-- 전체 게시글 수 구하기 -->
+  <select id="totalCnt" resultType="Integer">
+  	select count(*) total from tbl_board
+  	<include refid="criteria"></include>
+  </select>
+  
+  <!-- 
+  오라클에서 문자열 합치기 : ||
+  where subject like '%' || #{keyWord} || '%'
+  
+  mySQL 문자열 합치기 : CONCAT함수 사용
+  where subject like CONCAT('%', #{keyWord}, '%')
+  -->
+  
+  
+  
+  <sql id="criteria">
+  <!-- toString()를 이용해서 문자열로 변환, 문자열 변환이 없으면 문자형(ascii)으로 인식해서 NumberFormat 예외발생 -->
+  	<if test="searchType=='S'.toString()"> 
+<!--   		where subject like '%${keyWord}%' -->
+  		where subject like CONCAT('%', #{keyWord}, '%')
+  	</if>
+<!--   	<if test="searchType=='C'.toString()"> 대신에 아래와같이 "와 '를 바꿔서 표기-->
+  	<if test='searchType=="C"'>
+  		where contents like CONCAT('%', #{keyWord}, '%')
+  	</if>
+  	<if test="searchType=='W'.toString()">
+  		where writer like CONCAT('%', #{keyWord}, '%')
+  	</if>
+  	<if test="searchType=='SC'">
+  		where subject like CONCAT('%', #{keyWord}, '%') OR contents like CONCAT('%', #{keyWord}, '%')
+  	</if>
+  	<if test="searchType=='SW'">
+  		where subject like CONCAT('%', #{keyWord}, '%') OR writer like CONCAT('%', #{keyWord}, '%')
+  	</if>
+  	<if test="searchType=='SWC'">
+  		where subject like CONCAT('%', #{keyWord}, '%') OR writer like CONCAT('%', #{keyWord}, '%') OR contents like CONCAT('%', #{keyWord}, '%')
+  	</if>
+  </sql>  
+  
+  <select id="getList" resultType="boardDTO">
+<!--     select * from tbl_board order by bid desc limit 0, 10 -->
+    select * from tbl_board     
+    <include refid="criteria"></include>    
+    order by bid desc limit #{startIndex}, #{cntPerPage}
+  </select>
+  
+  
+  
+  <insert id="insert" parameterType="boardDTO">
+  	insert into tbl_board(subject, contents, writer)
+  	values(#{subject}, #{contents}, #{writer})
+  </insert>
+  
+  <select id="view" parameterType="Integer" resultType="boardDTO">
+  	select * from tbl_board where bid=#{bid}
+  </select>
+  
+  <delete id="delete" parameterType="Integer">
+  	delete from tbl_board where bid=#{bid}
+  </delete>
+  
+  <update id="update" parameterType="boardDTO">
+  	update tbl_board set subject=#{subject}, contents=#{contents} where bid=#{bid}
+  </update>
+  
+  <update id="hitAdd" parameterType="Integer">
+  	update tbl_board set hit = hit+1 where bid=#{bid}
+  </update>
+  
+  
+  
+</mapper>
